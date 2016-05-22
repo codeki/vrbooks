@@ -30,7 +30,7 @@ Also relevant to a detailed rendering would be if it's a paperback or hardback. 
 
 
 ### Blender and Python
-This works beautifully. See ```makeBook.py``` for first example of a simpy Python script that:
+This works beautifully. See ```makeBook.py``` for first example of a simple Python script that:
 * parses a dummy input file with titles and dimensions
 * instructs Blender to build each model and export as FBX file
 
