@@ -26,6 +26,9 @@ As well as front cover images in mutiple sizes...
 ```
 And backcover may sometimes be provided as one of the ```Category="variant"``` ImageSet results, for example, ```http://ecx.images-amazon.com/images/I/51XqXtcuqbL.jpg```.  Not sure how to know *which* "variant" is the backcover, however, and not sure is spine image is ever provided...
 
+Also relevant to a detailed rendering would be if it's a paperback or hardback. This information is provided in the ```<Binding>``` tag under ```<ItemAttributes>```. Nice!
+
+
 ### Blender and Python
 This works beautifully. See ```makeBook.py``` for first example of a simpy Python script that:
 * parses a dummy input file with titles and dimensions
