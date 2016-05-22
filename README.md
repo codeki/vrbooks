@@ -28,6 +28,10 @@ And backcover may sometimes be provided as one of the ```Category="variant"``` I
 
 Also relevant to a detailed rendering would be if it's a paperback or hardback. This information is provided in the ```<Binding>``` tag under ```<ItemAttributes>```. Nice!
 
+### Data Scripts
+Amazon PA-API provides a PHP snippet from a web form "scratchpad" that can be adapted to start with a list of ISBNs, generate signed URLs for the API query, run the queries, and generate a folder of XML returns.
+
+Another script can then parse those XMLs to generate the input file format for the Blender/Python script to generate the models.
 
 ### Blender and Python
 This works beautifully. See ```makeBook.py``` for first example of a simple Python script that:
