@@ -15,9 +15,13 @@ while True:
 	for n in dims:
 		dwh.append(float(n))
 	dwh.sort()
-	d = dwh[0]
-	w = dwh[1]
-	h = dwh[2]
+
+	#extract and apply scaling factor
+	sc = 0.00015
+
+	d = dwh[0] * sc
+	w = dwh[1] * sc
+	h = dwh[2] * sc
 
 	#check variable blender commands
 #	print "bpy.ops.transform.resize(value=(%s,%s,%s))" %(d,w,h)
@@ -26,7 +30,7 @@ while True:
 	bpy.ops.mesh.primitive_cube_add()
 	bpy.ops.transform.resize(value=(d,w,h))
 
-	bpy.ops.export_scene.fbx(filepath="/Users/apico/Documents/VR_Books/"+title+".fbx",use_selection=True)
+	bpy.ops.export_scene.fbx(filepath="./"+title+".fbx",use_selection=True)
 
 
 f.close()
