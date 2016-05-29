@@ -2,7 +2,9 @@ import bpy
 
 f = open('sample-book-list.txt','r')
 while True:
+	isbn = f.readline().rstrip('\n')
 	title = f.readline().rstrip('\n')
+	binding = f.readlin().rstrip('\n')
 	dim = f.readline().rstrip('\n')
 	if not dim: break
 
@@ -31,8 +33,11 @@ while True:
 	bpy.ops.transform.resize(value=(d,w,h))
 	bpy.ops.object.shade_smooth()
 
+	#construct filename
+	titleStart = title[:8].replace(" ","") #truncated and trimmed version
+	filename = isbn+"_"+titleStart+".fbx" 
 
-	bpy.ops.export_scene.fbx(filepath="./"+title+".fbx",use_selection=True,global_scale=1.0, axis_forward='-Z', axis_up='Y', object_types={'MESH'}, use_mesh_modifiers=True, mesh_smooth_type='FACE', use_mesh_edges=False, use_anim=True, use_anim_action_all=True, use_default_take=True, use_anim_optimize=True, anim_optimize_precision=6.0, path_mode='AUTO', batch_mode='OFF', use_batch_own_dir=True, use_metadata=True)
+	bpy.ops.export_scene.fbx(filepath="./fbx/"+filename,use_selection=True,global_scale=1.0, axis_forward='-Z', axis_up='Y', object_types={'MESH'}, use_mesh_modifiers=True, mesh_smooth_type='FACE', use_mesh_edges=False, use_anim=True, use_anim_action_all=True, use_default_take=True, use_anim_optimize=True, anim_optimize_precision=6.0, path_mode='AUTO', batch_mode='OFF', use_batch_own_dir=True, use_metadata=True)
 
 
 f.close()
