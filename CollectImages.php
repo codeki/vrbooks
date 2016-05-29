@@ -24,7 +24,7 @@ foreach ($books as $isbn){
 
 	// Get extension and save file
 	$ext = pathinfo($imageUrl, PATHINFO_EXTENSION);
-	copy($imageUrl, "img/".$isbn.$ext);
+	copy($imageUrl, "img/".$isbn.".".$ext);
 
 	// Pause to be cool
 	sleep(1);
