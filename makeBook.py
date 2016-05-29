@@ -1,10 +1,11 @@
 import bpy
+import os
 
 f = open('sample-book-list.txt','r')
 while True:
 	isbn = f.readline().rstrip('\n')
 	title = f.readline().rstrip('\n')
-	binding = f.readlin().rstrip('\n')
+	binding = f.readline().rstrip('\n')
 	dim = f.readline().rstrip('\n')
 	if not dim: break
 
@@ -29,9 +30,13 @@ while True:
 #	print "bpy.ops.transform.resize(value=(%s,%s,%s))" %(d,w,h)
 	
 
-	bpy.ops.mesh.primitive_cube_add()
-	bpy.ops.transform.resize(value=(d,w,h))
-	bpy.ops.object.shade_smooth()
+	#clear anything from before
+	#bpy.ops.object.mode_set(mode='OBJECT')
+	#bpy.ops.object.select_by_type(type='MESH')
+	#bpy.ops.object.delete(use_global=False)
+
+	#for item in bpy.data.meshes:
+	#    bpy.data.meshes.remove(item)
 
 	#build mesh
 	bpy.ops.mesh.primitive_cube_add()
@@ -44,7 +49,9 @@ while True:
 	m1 = bpy.data.materials.new("cover")
 	m1.texture_slots.add()
 	t1 = bpy.data.textures.new("texture1",'IMAGE')
-	bpy.ops.image.open(filepath=isbn+".jpg", directory=os.getcwd()+"/img/", files=[{"name":isbn+".jpg"}], relative_path=True, show_multiview=False)
+	imagefile = isbn+".jpg"
+	imagedir = os.getcwd()+"/img/"
+	bpy.ops.image.open(filepath=imagefile, directory=imagedir, files=[{"name":imagefile}], relative_path=True, show_multiview=False)
 	m1.texture_slots[0].texture = t1
 	m1.texture_slots[0].texture_coords = 'OBJECT'
 	m1.texture_slots[0].object = bpy.data.objects["Cube.001"]
