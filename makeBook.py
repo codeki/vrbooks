@@ -3,51 +3,66 @@ import os
 from itertools import count
 
 #global book
-book = 0
+book = None
+
+def selectObj(obj):
+	bpy.ops.object.select_all(action='DESELECT')
+	bpy.context.scene.objects.active = obj
+	obj.select = True
+	return
+
+def selectObjByName(objName):
+	obj = None
+	for ob in bpy.context.scene.objects:
+		if ob.type == 'MESH' and ob.name.startswith(objName):
+			bpy.context.scene.objects.active = ob
+			ob.select = True
+			obj = ob
+		else:
+			ob.select = False
+	return obj
 
 def getCutCube(ccname):
 	if bpy.data.objects.get(ccname) is None:
 		bpy.ops.mesh.primitive_cube_add()
-		top = bpy.context.object
-		top.name = ccname
+		ccobj = bpy.context.object
+		ccobj.name = ccname
 	else:
-		top = bpy.data.objects.get(ccname)
+		ccobj = selectObjByName(ccname)
 
-	return top
+	return ccobj
 
-def positionCutCube(ccobj,l,w,h,x,y,z):
-	bpy.ops.transform.resize(value=(l*x, w, h))
+def positionCutCube(ccname,l,w,h,x,y,z):
+	ccobj = selectObjByName(ccname)
+	bpy.ops.transform.resize(value=(l-2*x, w, h))
 	ccobj.location[1] = y
-	ccobj.location[2] = h*z
+	ccobj.location[2] = z
+	return
+
+def cutWithCube(l,w,h,x,y,z):
+	ccname = "Cutter"
+	#create and position
+	getCutCube(ccname)
+	positionCutCube(ccname,l,w,h,x,y,z)
+	#cut
+	selectObj(book)
+	bpy.ops.object.modifier_add(type='BOOLEAN')
+	book.modifiers["Boolean"].operation = 'DIFFERENCE'
+	book.modifiers["Boolean"].object = bpy.data.objects[ccname]
+	bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
+	#delete
+	selectObjByName(ccname)
+	bpy.ops.object.delete()
 	return
 
 def cutHardcover(l,w,h):
-	global book
+	#introduce x,y,z factors to adjust cutting cubes relative to book l,w,h
+	cutWithCube(l,w,h,0.001,0.003,2*h-0.002)
+	cutWithCube(l,w,h,0.001,0.003,-2*h+0.002)
+	cutWithCube(l,w,h,0.001,2*w-0.002,0)
 
-	#set boolean modifier on book
-	bpy.ops.object.modifier_add(type='BOOLEAN')
-	
-	#get cubes to cut with, create if not already there
-	top = getCutCube("Top")
-	#bottom = getCutCube("Bottom")
-	#side = getCutCube("Side")
-
-	#resize and reposition cutting cubes
-	positionCutCube(top,l,w,h,0.8,0.003,0.97)
-	#positionCutCube(bottom,l,w,h,0.8,0.003,-0.97)
-	#positionCutCube(side,l,w,h,0.8,0.97,0)
-
-	#make cuts
-	bpy.context.scene.objects.active = book
-	book.select = True
-	book.modifiers["Boolean"].operation = 'DIFFERENCE'
-
-	book.modifiers["Boolean"].object = bpy.data.objects["Top"]
-	bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
-	#book.modifiers["Boolean"].object = bpy.data.objects["Bottom"]
-	#bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
-	#book.modifiers["Boolean"].object = bpy.data.objects["Side"]
-	#bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
+	#reset active selection
+	selectObj(book)	
 
 	return
 
@@ -91,7 +106,11 @@ def createBook(binding,dims):
 	#set dimensions of book cube
 	bpy.ops.transform.resize(value=(l, w, h))
 
+	#if not a paperback, then position and cut
 	if "Paperback" not in binding:
+		book.location[0] = 0
+		book.location[1] = 0
+		book.location[2] = 0
 		cutHardcover(l,w,h)
 
 	#smooth
