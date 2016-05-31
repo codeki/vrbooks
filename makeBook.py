@@ -2,9 +2,57 @@ import bpy
 import os
 from itertools import count
 
+#global book
+book = 0
 
+def getCutCube(ccname):
+	if bpy.data.objects.get(ccname) is None:
+		bpy.ops.mesh.primitive_cube_add()
+		top = bpy.context.object
+		top.name = ccname
+	else:
+		top = bpy.data.objects.get(ccname)
+
+	return top
+
+def positionCutCube(ccobj,l,w,h,x,y,z):
+	bpy.ops.transform.resize(value=(l*x, w, h))
+	ccobj.location[1] = y
+	ccobj.location[2] = h*z
+	return
+
+def cutHardcover(l,w,h):
+	global book
+
+	#set boolean modifier on book
+	bpy.ops.object.modifier_add(type='BOOLEAN')
+	
+	#get cubes to cut with, create if not already there
+	top = getCutCube("Top")
+	#bottom = getCutCube("Bottom")
+	#side = getCutCube("Side")
+
+	#resize and reposition cutting cubes
+	positionCutCube(top,l,w,h,0.8,0.003,0.97)
+	#positionCutCube(bottom,l,w,h,0.8,0.003,-0.97)
+	#positionCutCube(side,l,w,h,0.8,0.97,0)
+
+	#make cuts
+	bpy.context.scene.objects.active = book
+	book.select = True
+	book.modifiers["Boolean"].operation = 'DIFFERENCE'
+
+	book.modifiers["Boolean"].object = bpy.data.objects["Top"]
+	bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
+	#book.modifiers["Boolean"].object = bpy.data.objects["Bottom"]
+	#bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
+	#book.modifiers["Boolean"].object = bpy.data.objects["Side"]
+	#bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
+
+	return
 
 def createBook(binding,dims):
+	global book
 
 	#create book cube
 	bpy.ops.mesh.primitive_cube_add()
@@ -43,12 +91,17 @@ def createBook(binding,dims):
 	#set dimensions of book cube
 	bpy.ops.transform.resize(value=(l, w, h))
 
+	if "Paperback" not in binding:
+		cutHardcover(l,w,h)
+
 	#smooth
 	bpy.ops.object.shade_smooth()
 
-	return book
+	return 
 
-def createMaterials(book,isbn):
+def createMaterials(isbn):
+	global book
+
 	# make faces
 	bpy.ops.mesh.uv_texture_add()
 	bpy.ops.object.editmode_toggle()
@@ -115,12 +168,14 @@ def createMaterials(book,isbn):
 			if vert.co.x < 0:
 				left = False
 				if left:
-					f.material_index = 0
+						f.material_index = 0
 				else:
 					f.material_index = 1
 	return
 
-def exportFbx(book,isbn,title):
+def exportFbx(isbn,title):
+	global book
+
 	titleStart = title[:8].replace(" ","").replace(":","") #truncated and trimmed version
 	filename = isbn+"_"+titleStart+".fbx"
 	book.select
@@ -129,8 +184,15 @@ def exportFbx(book,isbn,title):
 	return
 
 
-## Main
 
+##DEBUG: Interactive Mode
+bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(0.5, -0.5, -0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
+
+bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(-0.5, 0.5, 0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
+
+## MAIN
 bookList = open('sample-book-list.txt','r')
 while True:
 	isbn = bookList.readline().rstrip('\n')
@@ -139,8 +201,8 @@ while True:
 	dims = bookList.readline().rstrip('\n')
 	if not dims: break
 
-	book = createBook(binding,dims)
-	createMaterials(book,isbn)
-	exportFbx(book,isbn,title)
+	createBook(binding,dims)
+	createMaterials(isbn)
+	exportFbx(isbn,title)
 
 bookList.close()
