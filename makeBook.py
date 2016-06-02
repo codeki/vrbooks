@@ -81,7 +81,7 @@ def createBook(binding,dims):
 	lwh.sort()
 
 	#extract each dim and apply scaling factor
-	sc = 0.00015
+	sc = 0.000127 #primitive cube in hundreths of an inch = 2.54(cm/in)/100(cm/m)/100(hundreths in/in)/2(primitive cube in meters)
 
 	l = lwh[0] * sc
 	w = lwh[1] * sc
@@ -90,18 +90,18 @@ def createBook(binding,dims):
 	#overwrite any zero dimensions; use binding info 
 	if "Paperback" in binding:
 		if l == 0:
-			l = .015
+			l = .008
 		if w == 0:
-			w = .05
+			w = .067
 		if h == 0:
-			h = .09
+			h = .10
 	else: #set to average hardcover dims
 		if l == 0:
-			l = .020
+			l = .018
 		if w == 0:
-			w = .1
+			w = .076
 		if h == 0:
-			h = .15
+			h = .114
 
 	#set dimensions of book cube
 	bpy.ops.transform.resize(value=(l, w, h))
