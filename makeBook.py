@@ -127,45 +127,71 @@ def createMaterials(isbn):
 	bpy.ops.uv.cube_project()
 	bpy.ops.object.editmode_toggle()
 
-	# Image texture
+	# Cover image texture
 	imgPath = 'D:/vrbookdrop/img/'+isbn+'.jpg'
-	img = bpy.data.images.load(imgPath)
+	if os.path.isfile(imgPath):
+		img = bpy.data.images.load(imgPath)
+	else:
+		img = bpy.data.images.load('D:/vrbookdrop/img/noimage.png')
 	imtex = bpy.data.textures.new('ImageTex','IMAGE')
 	imtex.image = img
+	imtex.extension = 'CLIP'
+	
+	# Pages image texture
+	pagPath = 'D:/vrbookdrop/img/pages.jpg'
+	pag = bpy.data.images.load(pagPath)
+	pagtex = bpy.data.textures.new('ImageTex','IMAGE')
+	pagtex.image = pag
+	pagtex.extension = 'EXTEND'
+	pagtex.use_flip_axis = True
 	
 	# Marble texture
-	mbtex = bpy.data.textures.new('MarbleTex','MARBLE')
-	mbtex.noise_depth = 1
-	mbtex.noise_scale = 1.6
-	mbtex.noise_basis = 'BLENDER_ORIGINAL'
-	mbtex.turbulence = 5
+	#mbtex = bpy.data.textures.new('MarbleTex','MARBLE')
+	#mbtex.noise_depth = 1
+	#mbtex.noise_scale = 1.6
+	#mbtex.noise_basis = 'BLENDER_ORIGINAL'
+	#mbtex.turbulence = 5
 	
 	# Cloud texture
-	cltex = bpy.data.textures.new('CloudsTex','CLOUDS')
-	cltex.noise_basis = 'BLENDER_ORIGINAL'
-	cltex.noise_scale = 1.05
-	cltex.noise_type = 'SOFT_NOISE'
+	#cltex = bpy.data.textures.new('CloudsTex','CLOUDS')
+	#cltex.noise_basis = 'BLENDER_ORIGINAL'
+	#cltex.noise_scale = 1.05
+	#cltex.noise_type = 'SOFT_NOISE'
 	
-	# Create new material
-	mat = bpy.data.materials.new('TexMat')
-	mat.alpha = 0
-		
-	# Map image to color, this is the default
-	im_mtex = mat.texture_slots.add()
-	im_mtex.texture = imtex
-	im_mtex.texture_coords = 'UV'
-	
-	# Create new material
-	mat2 = bpy.data.materials.new('Blue')
-	mat2.diffuse_color = (0.5, 0.5, 0.8)
-	mat2.specular_color = (0.3, 0.3, 0.0)
+	# Create materials
+	mat0 = bpy.data.materials.new('FrCovMat')
+	mat0.alpha = 0
+	mat0.specular_intensity = 0.25
+	im_mtex0 = mat0.texture_slots.add()
+	im_mtex0.texture = imtex
+	im_mtex0.texture_coords = 'UV'
 
-	# Map marble to specularity
-	mb_mtex = mat2.texture_slots.add()
-	mb_mtex.texture = mbtex
-	mb_mtex.texture_coords = 'UV'
-	mb_mtex.use_map_specular = True
+	mat1 = bpy.data.materials.new('SpCovMat')
+	mat1.alpha = 0
+	mat1.specular_intensity = 0.25
+	im_mtex1 = mat1.texture_slots.add()
+	im_mtex1.texture = imtex
+	im_mtex1.texture_coords = 'UV'
 	
+	mat2 = bpy.data.materials.new('BkCovMat')
+	mat2.alpha = 0
+	mat2.specular_intensity = 0.25
+	im_mtex2 = mat2.texture_slots.add()
+	im_mtex2.texture = imtex
+	im_mtex2.texture_coords = 'UV'
+
+	mat3 = bpy.data.materials.new('PagMat')
+	mat3.alpha = 0
+	mat3.specular_intensity = 0
+	pg_mtex = mat3.texture_slots.add()
+	pg_mtex.texture = pagtex
+	pg_mtex.texture_coords = 'UV'
+
+	mat4 = bpy.data.materials.new('HcvMat')
+	mat4.alpha = 0
+	mat4.specular_intensity = 0
+	mat4.diffuse_color = (0.8,0.8,0.8)
+
 	# Map cloud to alpha, reflection and normal, but not diffuse
 	#cl_mtex = mat2.texture_slots.add()
 	#cl_mtex.texture = cltex
@@ -176,20 +202,40 @@ def createMaterials(isbn):
 	
 	# Add the two materials to mesh
 	me = book.data
-	me.materials.append(mat)
+	me.materials.append(mat0)
+	me.materials.append(mat1)
 	me.materials.append(mat2)
+	me.materials.append(mat3)
+	me.materials.append(mat4)
+	
 	
 	# Assign mat2 to all faces to the left, with x coordinate > 0
 	for f in me.polygons:
-		left = True
+		vsumx = 0
+		vsumy = 0
+		vsumz = 0
 		for v in f.vertices:
 			vert = me.vertices[v]
-			if vert.co.x < 0:
-				left = False
-				if left:
-						f.material_index = 0
-				else:
-					f.material_index = 1
+			vsumx += vert.co.x
+			vsumy += vert.co.y
+			vsumz += vert.co.z
+		if vsumx == 4: #front
+			f.material_index = 0
+		elif vsumy == -4: #spine
+			f.material_index = 1
+		elif vsumx == -4: #back
+			f.material_index = 2
+		elif vsumz/4 == vert.co.z: #pages, top and bottom
+			f.material_index = 3
+		elif vsumy/4 == vert.co.y and vsumy > 0: #pages, side
+			f.material_index = 3
+		elif vsumz > 4 or vsumz < -4: #hard cover edge, top and bottom
+			f.material_index = 4
+		elif vsumy/4 == vert.co.y and vsumy < 0: #hard cover edge, inside spine
+			f.material_index = 4
+		else: #inner faces of hardcover, e.g., dust jacket flaps
+			f.material_index = 0 
+
 	return
 
 def exportFbx(isbn,title):
