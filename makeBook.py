@@ -29,8 +29,16 @@ def getCutCube(ccname):
 		ccobj.name = ccname
 	else:
 		ccobj = selectObjByName(ccname)
-
 	return ccobj
+
+def getCyl(cylname):
+	if bpy.data.objects.get(cylname) is None:
+		bpy.ops.mesh.primitive_cylinder_add()
+		cylobj = bpy.context.object
+		cylobj.name = cylname
+	else:
+		cylobj = selectObjByName(cylname)
+	return cylobj
 
 def positionCutCube(ccname,l,w,h,x,y,z):
 	ccobj = selectObjByName(ccname)
@@ -39,27 +47,52 @@ def positionCutCube(ccname,l,w,h,x,y,z):
 	ccobj.location[2] = z
 	return
 
-def cutWithCube(l,w,h,x,y,z):
+def positionCyl(cylname,l,w,h,y):
+	cylobj = selectObjByName(cylname)
+	bpy.ops.transform.resize(value=(l,0.004,h)) #w = half of standard pb l
+	cylobj.location[1] = y
+	return
+
+def cutWithCube(myObj,l,w,h,x,y,z):
 	ccname = "Cutter"
 	#create and position
 	getCutCube(ccname)
 	positionCutCube(ccname,l,w,h,x,y,z)
 	#cut
-	selectObj(book)
+	selectObj(myObj)
 	bpy.ops.object.modifier_add(type='BOOLEAN')
-	book.modifiers["Boolean"].operation = 'DIFFERENCE'
-	book.modifiers["Boolean"].object = bpy.data.objects[ccname]
+	myObj.modifiers["Boolean"].operation = 'DIFFERENCE'
+	myObj.modifiers["Boolean"].object = bpy.data.objects[ccname]
 	bpy.ops.object.modifier_apply(apply_as='DATA', modifier="Boolean")
 	#delete
 	selectObjByName(ccname)
 	bpy.ops.object.delete()
 	return
 
+def addCyl(myObj,l,w,h,y):
+	cylname = "Buldge"
+	#create and position
+	myCyl = getCyl(cylname)
+	positionCyl(cylname,l,w,h,y)
+	#add buldge
+	selectObj(myObj)
+	bpy.ops.object.modifier_add(type='BOOLEAN')
+	myObj.modifiers["Boolean"].operation = 'UNION'
+	myObj.modifiers["Boolean"].object = bpy.data.objects[cylname]
+	bpy.ops.object.modifier_apply(apply_as='DATA',modifier="Boolean")
+	#delete
+	selectObjByName(cylname)
+	bpy.ops.object.delete()
+	return
+
 def cutHardcover(l,w,h):
+	#add spine buldge
+	addCyl(book,l,w,h,-w)
+	
 	#introduce x,y,z factors to adjust cutting cubes relative to book l,w,h
-	cutWithCube(l,w,h,0.001,0.003,2*h-0.002)
-	cutWithCube(l,w,h,0.001,0.003,-2*h+0.002)
-	cutWithCube(l,w,h,0.001,2*w-0.002,0)
+	cutWithCube(book,l,w,h,0.001,0.003,2*h-0.002) #top
+	cutWithCube(book,l,w,h,0.001,0.003,-2*h+0.002) #bottom
+	cutWithCube(book,l,w,h,0.001,2*w-0.002,0) #side
 
 	#reset active selection
 	selectObj(book)	
@@ -92,9 +125,9 @@ def createBook(binding,dims):
 		if l == 0:
 			l = .008
 		if w == 0:
-			w = .067
+			w = .052
 		if h == 0:
-			h = .10
+			h = .084
 	else: #set to average hardcover dims
 		if l == 0:
 			l = .018
