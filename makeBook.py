@@ -151,8 +151,36 @@ def createBook(binding,dims):
 
 	return 
 
-def createMaterials(isbn):
+def createPageMat():
+        # Pages image texture
+	pagPath = 'D:/vrbookdrop/img/pages.jpg'
+	pag = bpy.data.images.load(pagPath)
+	pagtex = bpy.data.textures.new('ImageTex','IMAGE')
+	pagtex.image = pag
+	pagtex.extension = 'EXTEND'
+	pagtex.use_flip_axis = True
+
+	mat3 = bpy.data.materials.new('PagMat')
+	mat3.alpha = 0
+	mat3.specular_intensity = 0
+	pg_mtex = mat3.texture_slots.add()
+	pg_mtex.texture = pagtex
+	pg_mtex.texture_coords = 'UV'
+
+	return mat3
+
+def createHcvMat():
+	mat4 = bpy.data.materials.new('HcvMat')
+	mat4.alpha = 0
+	mat4.specular_intensity = 0
+	mat4.diffuse_color = (0.8,0.8,0.8)
+	
+	return mat4
+
+def createMaterials(isbn,titleStart,mat3,mat4):
 	global book
+
+	suffix = isbn+titleStart
 
 	# make faces
 	bpy.ops.mesh.uv_texture_add()
@@ -170,14 +198,6 @@ def createMaterials(isbn):
 	imtex.image = img
 	imtex.extension = 'CLIP'
 	
-	# Pages image texture
-	pagPath = 'D:/vrbookdrop/img/pages.jpg'
-	pag = bpy.data.images.load(pagPath)
-	pagtex = bpy.data.textures.new('ImageTex','IMAGE')
-	pagtex.image = pag
-	pagtex.extension = 'EXTEND'
-	pagtex.use_flip_axis = True
-	
 	# Marble texture
 	#mbtex = bpy.data.textures.new('MarbleTex','MARBLE')
 	#mbtex.noise_depth = 1
@@ -192,38 +212,26 @@ def createMaterials(isbn):
 	#cltex.noise_type = 'SOFT_NOISE'
 	
 	# Create materials
-	mat0 = bpy.data.materials.new('FrCovMat')
+	mat0 = bpy.data.materials.new('FrCovMat'+suffix)
 	mat0.alpha = 0
 	mat0.specular_intensity = 0.25
 	im_mtex0 = mat0.texture_slots.add()
 	im_mtex0.texture = imtex
 	im_mtex0.texture_coords = 'UV'
 
-	mat1 = bpy.data.materials.new('SpCovMat')
+	mat1 = bpy.data.materials.new('SpCovMat'+suffix)
 	mat1.alpha = 0
 	mat1.specular_intensity = 0.25
 	im_mtex1 = mat1.texture_slots.add()
 	im_mtex1.texture = imtex
 	im_mtex1.texture_coords = 'UV'
 	
-	mat2 = bpy.data.materials.new('BkCovMat')
+	mat2 = bpy.data.materials.new('BkCovMat'+suffix)
 	mat2.alpha = 0
 	mat2.specular_intensity = 0.25
 	im_mtex2 = mat2.texture_slots.add()
 	im_mtex2.texture = imtex
 	im_mtex2.texture_coords = 'UV'
-
-	mat3 = bpy.data.materials.new('PagMat')
-	mat3.alpha = 0
-	mat3.specular_intensity = 0
-	pg_mtex = mat3.texture_slots.add()
-	pg_mtex.texture = pagtex
-	pg_mtex.texture_coords = 'UV'
-
-	mat4 = bpy.data.materials.new('HcvMat')
-	mat4.alpha = 0
-	mat4.specular_intensity = 0
-	mat4.diffuse_color = (0.8,0.8,0.8)
 
 	# Map cloud to alpha, reflection and normal, but not diffuse
 	#cl_mtex = mat2.texture_slots.add()
@@ -242,7 +250,7 @@ def createMaterials(isbn):
 	me.materials.append(mat4)
 	
 	
-	# Assign mat2 to all faces to the left, with x coordinate > 0
+	# Assign mats to faces
 	for f in me.polygons:
 		vsumx = 0
 		vsumy = 0
@@ -271,10 +279,9 @@ def createMaterials(isbn):
 
 	return
 
-def exportFbx(isbn,title):
+def exportFbx(isbn,titleStart):
 	global book
 
-	titleStart = title[:8].replace(" ","").replace(":","") #truncated and trimmed version
 	filename = isbn+"_"+titleStart+".fbx"
 	book.select
 	bpy.ops.export_scene.fbx(filepath="./fbx/"+filename,use_selection=True,global_scale=1.0, axis_forward='-Z', axis_up='Y', object_types={'MESH'}, use_mesh_modifiers=True, mesh_smooth_type='FACE', use_mesh_edges=False, use_anim=True, use_anim_action_all=True, use_default_take=True, use_anim_optimize=True, anim_optimize_precision=6.0, path_mode='AUTO', batch_mode='OFF', use_batch_own_dir=True, use_metadata=True)
@@ -284,14 +291,18 @@ def exportFbx(isbn,title):
 
 
 ##DEBUG: Interactive Mode
-bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(0.5, -0.5, -0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
+#bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(0.5, -0.5, -0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+#bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
 
-bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(-0.5, 0.5, 0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
+#bpy.ops.object.lamp_add(type='POINT', view_align=False, location=(-0.5, 0.5, 0.5), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+#bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0.00192985, -0.00115219, 0.00415842), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
 
 ## MAIN
 bookList = open('sample-book-list.txt','r')
+
+mat3 = createPageMat()
+mat4 = createHcvMat()
+
 while True:
 	isbn = bookList.readline().rstrip('\n')
 	title = bookList.readline().rstrip('\n')
@@ -299,8 +310,11 @@ while True:
 	dims = bookList.readline().rstrip('\n')
 	if not dims: break
 
+	#truncated and clean version of human readable title
+	titleStart = title[:8].replace(" ","").replace(":","").replace("'","").replace("(","") 
+	#call functions
 	createBook(binding,dims)
-	createMaterials(isbn)
-	exportFbx(isbn,title)
+	createMaterials(isbn,titleStart,mat3,mat4)
+	exportFbx(isbn,titleStart)
 
 bookList.close()
